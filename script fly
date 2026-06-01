@@ -1,0 +1,98 @@
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local RS = game:GetService("RunService")
+local Pl = game:GetService("Players")
+local lp = Pl.LocalPlayer
+local lb = loadstring(game:HttpGet("https://absent.wtf/AKADMINLIB/LIB.lua"))()
+
+local NDS_PLACE_ID = 189707
+
+if game.PlaceId ~= NDS_PLACE_ID then
+	lb:notify("Wrong Game", "This command is only for Natural Disaster Survival", nil, true)
+	return
+end
+
+local wn = lb.new("NDS GODMODE")
+local _t = wn:addTab("Main")
+wn:switchTab(_t)
+
+local INF = math.huge
+local hb = nil
+local gmEnabled = false
+
+local function applyGodmode()
+	for _, v in pairs(getgc(true)) do
+		if type(v) == "table" then
+			local h = rawget(v, "Health")
+			if h and h ~= INF then
+				rawset(v, "Health", INF)
+				rawset(v, "MaxHealth", INF)
+			end
+		end
+	end
+	if lp.Character then
+		local hu = lp.Character:FindFirstChildOfClass("Humanoid")
+		if hu then
+			hu.MaxHealth = INF
+			hu.Health = INF
+			hu:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+		end
+	end
+end
+
+local function startGodmode()
+	applyGodmode()
+	if hb then hb:Disconnect() hb = nil end
+	local gcTimer = 0
+	local GC_FREQ = 5
+	hb = RS.Heartbeat:Connect(function(dt)
+		if lp.Character then
+			local hu = lp.Character:FindFirstChildOfClass("Humanoid")
+			if hu then
+				if hu.MaxHealth ~= INF then hu.MaxHealth = INF end
+				hu.Health = hu.MaxHealth
+				hu:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+			end
+			gcTimer = gcTimer + dt
+			if gcTimer >= GC_FREQ then
+				gcTimer = 0
+				for _, v in pairs(getgc(true)) do
+					if type(v) == "table" then
+						local h = rawget(v, "Health")
+						if h and h ~= INF then
+							rawset(v, "Health", INF)
+							rawset(v, "MaxHealth", INF)
+						end
+					end
+				end
+			end
+		end
+	end)
+end
+
+local function stopGodmode()
+	if hb then hb:Disconnect() hb = nil end
+end
+
+wn:addConnection(lp.CharacterAdded, function()
+	task.wait(1)
+	if gmEnabled then
+		startGodmode()
+	end
+end)
+
+wn:addToggle("God Mode", false, function(state)
+	gmEnabled = state
+	if state then
+		startGodmode()
+	else
+		stopGodmode()
+	end
+end)
+
+wn:onClose(function()
+	stopGodmode()
+end)
+
+wn:switchTab(_t)
